@@ -86,7 +86,7 @@ callbackSelect = CustomJS(
         source = geoSource, 
         dataset = CovidDFByCountryFilteredJSONString, 
         dateSlider = date_range,
-        mapper=color_map
+        mapper=color_mapper
     ), 
     code = """
     function formatDate(date) {
@@ -138,7 +138,7 @@ callbackDateSlider = CustomJS(
         source=geoSource, 
         dataset=CovidDFByCountryFilteredJSONString,
         select=select,
-        mapper=color_map
+        mapper=color_mapper
     ), 
     code="""
         function formatDate(date) {
