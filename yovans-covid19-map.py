@@ -85,7 +85,8 @@ callbackSelect = CustomJS(
     args = dict( 
         source = geoSource, 
         dataset = CovidDFByCountryFilteredJSONString, 
-        dateSlider = date_range 
+        dateSlider = date_range,
+        mapper=color_map
     ), 
     code = """
     function formatDate(date) {
@@ -104,8 +105,8 @@ callbackSelect = CustomJS(
     const tanggalTerpilih = formatDate(dateSlider.value[0]);
     const negaraSource = data.ADMIN;
     const kasusSource = data.Kasus;
-    
     const kasusFilteredByDate = [];
+    const kasusFiltered = [];
     for (let i=0;i<Object.keys(dataSet.Tanggal).length;i++) {
         if (tanggalTerpilih == Object.values(dataSet.Tanggal)[i]) {
             kasusFilteredByDate.push({
@@ -121,17 +122,23 @@ callbackSelect = CustomJS(
             };
         };
     };
+    for (const kasus of kasusSource ) {
+        if (kasus) {
+            kasusFiltered.push(kasus);
+        };
+    };
+    mapper.low = Math.min(...kasusFiltered);
+    mapper.high = Math.max(...kasusFiltered);
     source.change.emit();
     """
 )
-
-
 
 callbackDateSlider = CustomJS(
     args=dict(
         source=geoSource, 
         dataset=CovidDFByCountryFilteredJSONString,
-        select=select
+        select=select,
+        mapper=color_map
     ), 
     code="""
         function formatDate(date) {
@@ -151,34 +158,36 @@ callbackDateSlider = CustomJS(
         const negaraSource = data.ADMIN;
         const dataSet = JSON.parse(dataset);
         const tanggal = formatDate(new Date(cb_obj.value[0]));
-        
         const kasusFilteredByDate = [];
-    
+        const kasusFiltered = [];
         for (let i=0;i<Object.keys(dataSet.Tanggal).length;i++) {
             if (tanggal == Object.values(dataSet.Tanggal)[i]) {
                 kasusFilteredByDate.push({
                     namaNegara: Object.values(dataSet.Lokasi)[i],
                     jumKasus: Object.values(dataSet[select.value])[i]
-                })
-            }
-        }
+                });
+            };
+        };
         for (let i=0;i<tanggalSource.length;i++){
             tanggalSource[i] = tanggal;
             for (const country of kasusFilteredByDate) {
                 if (negaraSource[i] == country.namaNegara) {
-                    kasusSource[i] = country.jumKasus
-                }
-            }
-        }
-
+                    kasusSource[i] = country.jumKasus;
+                };
+            };
+        };
+        for (const kasus of kasusSource ) {
+            if (kasus) {
+                kasusFiltered.push(kasus);
+            };
+        };
+        mapper.low = Math.min(...kasusFiltered);
+        mapper.high = Math.max(...kasusFiltered);
         source.change.emit();
     """)
 
-
-
 date_range.js_on_change('value_throttled',callbackDateSlider)
 select.js_on_change('value',callbackSelect)
-
 
 fill_colorOpt = {'field': 'Kasus', 'transform': color_mapper}
 bokeh_map = figure(
@@ -199,9 +208,8 @@ bokeh_map.patches(source=geoSource,
                  )
 bokeh_map.axis.visible = False
 
-
-kolom = column([bokeh_map, date_range])
-layout = row([kolom, select])
-
+kolom = column([select, date_range])
+kolom.sizing_mode='scale_width'
+layout = row([bokeh_map, kolom])
 curdoc().add_root(layout)
 
