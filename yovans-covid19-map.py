@@ -211,5 +211,6 @@ bokeh_map.axis.visible = False
 kolom = column([select, date_range])
 kolom.sizing_mode='scale_width'
 layout = row([bokeh_map, kolom])
+curdoc().title = 'Yovans covid19 Map'
 curdoc().add_root(layout)
 
